@@ -2,7 +2,6 @@ import { app, BrowserWindow, ipcMain, Notification, Menu, Tray, dialog, nativeIm
 import path from "node:path";
 import schedule from "node-schedule";
 const notifier = require('node-notifier');
-console.log(ipcMain, Notification, dialog)
 notifier.notify('Message');
 
 // The built directory structure
@@ -20,21 +19,27 @@ process.env.PUBLIC = app.isPackaged
   : path.join(process.env.DIST, "../public");
 
 let win: BrowserWindow | null;
+const width = 310
+const height = 500
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
 
 function createWindow() {
   win = new BrowserWindow({
     icon: path.join(process.env.PUBLIC, "electron-vite.svg"),
+    width: width,
+    height: height,
+    show: false, // 默认窗口不显示
     webPreferences: {
       preload: path.join(__dirname, "preload.js")
-    }
+    },
   });
-
-  // Test active push message to Renderer-process.
-  win.webContents.on("did-finish-load", () => {
-    win?.webContents.send("main-process-message", new Date().toLocaleString());
-  });
+  // 隐藏自带菜单
+  win.setMenu(null)
+  win.webContents.openDevTools()
+  // win.webContents.on("did-finish-load", () => {
+  //   win?.webContents.send("main-process-message", new Date().toLocaleString());
+  // });
 
   if (VITE_DEV_SERVER_URL) {
     win.loadURL(VITE_DEV_SERVER_URL);
@@ -43,6 +48,10 @@ function createWindow() {
     win.loadFile(path.join(process.env.DIST, "index.html"));
   }
   scheduleJob()
+
+  win.on('blur', () => {
+    win?.hide()
+  })
 }
 
 app.on("window-all-closed", () => {
@@ -50,10 +59,9 @@ app.on("window-all-closed", () => {
 });
 
 
-let tray = null;
-
 app.whenReady().then(() => {
   // scheduleJob()
+  ipcMain.handle("set-time", scheduleJob);
   createWindow();
   app.on("activate", function () {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
@@ -64,8 +72,8 @@ app.whenReady().then(() => {
 function initTray() {
   const image = nativeImage.createFromPath(path.join(process.env['PUBLIC'] as string, '01.png'))
   // 创建托盘图标
-  tray = new Tray(image);
-
+  const tray = new Tray(image);
+  
   // 创建右键菜单
   const contextMenu = Menu.buildFromTemplate([
     // { label: '菜单项 1', click: () => console.log('菜单项 1 被点击') },
@@ -78,22 +86,21 @@ function initTray() {
 
   // 托盘图标被点击时触发的事件
   tray.on('click', () => {
-    const wins = BrowserWindow.getAllWindows();
-    if (wins.length) {
-      const find = wins.find((win) => win.isMinimized());
-      if (find) find.show();
-      else wins[0]?.focus();
+    const trayBounds = tray.getBounds()
+    win?.setPosition(trayBounds.x + trayBounds.width / 2 - width / 2, trayBounds.height + height/2 + 100)
+    if (win?.isVisible()) {
+      win.hide()
     } else {
-      createWindow();
+      win?.show()
     }
-    // 在这里添加你希望执行的操作
   });
 }
 
-function scheduleJob() {
+function scheduleJob(event: any, value: string): any {
+  console.log(value, 'eventeventeventevent')
   // 秒 分 时 日 月 周
-  schedule.scheduleJob("0 0,30 10-20 * * 1-5", function () {
-    win?.webContents.send("dialog:openFile", new Date());
+  schedule.scheduleJob(`0 0,30 ${value} * * 1-5`, function () {
+  // schedule.scheduleJob(`${value} * 10-20 * * 1-5`, function () {
     // showNotification();
     notifier.notify({
       title: '我的通知',
@@ -102,4 +109,5 @@ function scheduleJob() {
       sound:true,  //是否显示提示音，true显示
     });
   });
+  return JSON.stringify(new Date())
 }
