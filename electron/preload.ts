@@ -1,7 +1,10 @@
 import { contextBridge, ipcRenderer } from'electron'
 
+// contextBridge.exposeInMainWorld('electronAPI', {
+//   handleCounter: (callback: any) => ipcRenderer.on('dialog:openFile', callback)
+// })
 contextBridge.exposeInMainWorld('electronAPI', {
-  handleCounter: (callback: any) => ipcRenderer.on('dialog:openFile', callback)
+  openFile: (value: string) => ipcRenderer.invoke('set-time', value)
 })
 
 function domReady(condition: DocumentReadyState[] = ['complete', 'interactive']) {
