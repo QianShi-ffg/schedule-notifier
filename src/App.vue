@@ -1,5 +1,5 @@
 <template>
-  <form id="form" class="form">
+  <!-- <form id="form" class="form">
     <p>
       <label for="appt-time">开始时间: </label>
       <input type="number" v-model="formData.startTime" />
@@ -9,12 +9,17 @@
       <input type="number" v-model="formData.endTime" />
     </p>
     <button onsubmit>确定</button>
-  </form>
-  <!-- <HelloWorld msg="Vite + Vue" /> -->
+  </form> -->
+  <button onsubmit>确定</button>
+  <popup>
+    <div>每天</div>
+    <div>周一到周五</div>
+    <div>自定义</div>
+  </popup>
 </template>
 
 <script setup lang="ts">
-// import HelloWorld from './components/HelloWorld.vue'
+import popup from './components/popup.vue'
 import { onMounted, ref, watch, reactive } from 'vue';
 
 const aaa = ref('')
@@ -45,7 +50,7 @@ watch(() => formData.startTime, (value:any) => {
 
 </script>
 
-<style scoped>
+<style scoped lang="scss">
 .logo {
   height: 6em;
   padding: 1.5em;
@@ -58,4 +63,5 @@ watch(() => formData.startTime, (value:any) => {
 .logo.vue:hover {
   filter: drop-shadow(0 0 2em #42b883aa);
 }
+
 </style>
