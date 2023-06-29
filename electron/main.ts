@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Notification, Menu, Tray, dialog, nativeImage } from "electron";
+import { app, BrowserWindow, ipcMain, Menu, Tray, nativeImage } from "electron";
 import path from "node:path";
 import schedule from "node-schedule";
 const notifier = require('node-notifier');
@@ -19,7 +19,7 @@ process.env.PUBLIC = app.isPackaged
   : path.join(process.env.DIST, "../public");
 
 let win: BrowserWindow | null;
-const width = 310
+const width = 290
 const height = 500
 // 🚧 Use ['ENV_NAME'] avoid vite:define plugin - Vite@2.x
 const VITE_DEV_SERVER_URL = process.env["VITE_DEV_SERVER_URL"];
@@ -29,6 +29,7 @@ function createWindow() {
     icon: path.join(process.env.PUBLIC, "electron-vite.svg"),
     width: width,
     height: height,
+    frame: false,
     show: false, // 默认窗口不显示
     webPreferences: {
       preload: path.join(__dirname, "preload.js")
@@ -36,7 +37,9 @@ function createWindow() {
   });
   // 隐藏自带菜单
   win.setMenu(null)
-  win.webContents.openDevTools()
+  // 启动打开控制台
+  // win.webContents.openDevTools()
+
   // win.webContents.on("did-finish-load", () => {
   //   win?.webContents.send("main-process-message", new Date().toLocaleString());
   // });
@@ -48,9 +51,9 @@ function createWindow() {
     win.loadFile(path.join(process.env.DIST, "index.html"));
   }
 
-  // win.on('blur', () => {
-  //   win?.hide()
-  // })
+  win.on('blur', () => {
+    win?.hide()
+  })
 }
 
 app.on("window-all-closed", () => {
@@ -75,8 +78,6 @@ function initTray() {
   
   // 创建右键菜单
   const contextMenu = Menu.buildFromTemplate([
-    // { label: '菜单项 1', click: () => console.log('菜单项 1 被点击') },
-    // { label: '菜单项 2', click: () => console.log('菜单项 2 被点击') },
     { label: '退出', click: () => app.quit() }
   ]);
 
@@ -95,10 +96,10 @@ function initTray() {
   });
 }
 
-function scheduleJob(event: any, value: string): any {
-  console.log(value, 'eventeventeventevent')
+function scheduleJob(event: any, value: any): any {
+  console.log(event, value, 'eventeventeventevent')
   // 秒 分 时 日 月 周
-  schedule.scheduleJob(`0 0,30 ${value} * * 1-5`, function () {
+  const job = schedule.scheduleJob(`0 ${value.minute || '0,30'} 10-20 * * ${value.day || '*' }`, function () {
   // schedule.scheduleJob(`${value} * 10-20 * * 1-5`, function () {
     // showNotification();
     notifier.notify({
@@ -108,5 +109,9 @@ function scheduleJob(event: any, value: string): any {
       sound:true,  //是否显示提示音，true显示
     });
   });
+  if (!value.isStart) {
+    console.log(66666666)
+    job.cancel()
+  }
   return JSON.stringify(new Date())
 }
